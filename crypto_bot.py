@@ -17,8 +17,8 @@ class CryptoBot:
 
     async def runBot(self, symbol):
         try:
-            api_key = ''
-            api_secret = ''
+            api_key = '1Lt38xGVQCtrI58IjWetYkcRLolmJAAabzgS5EeVQt089uFyPt4tszf8D6fEIpIS'
+            api_secret = 'F8x9SVYPhf1VJm4LnWoh0eRXuAhvilq30dqgGL8n3f4rI2Fzpc6ri58aiGTCJOtb'
             client = Client(api_key, api_secret)
             shm = shared_memory.SharedMemory(name='telega1111', create=False, size=price_ticker.PriceTicker.SHARED_MEMORY_SIZE)
             shm1Lock = shared_memory.SharedMemory(name='telega1111Lock', create=False, size=1)
@@ -41,7 +41,7 @@ class CryptoBot:
                     float(('{:.' + str(len(symbolInfo['filters'][0]['tickSize'].split('.')[-1])) + 'f}').format(sellPrice)),
                     symbolInfo['filters'][0]['tickSize']
                 )
-                sellQuantity = ('{:.' + str(len(symbolInfo['filters'][2]['stepSize'].split('.')[-1])) + '}').format(helpers.round_step_size(
+                sellQuantity = ('{:.' + str(len(symbolInfo['filters'][2]['stepSize'].split('.')[-1])) + 'f}').format(helpers.round_step_size(
                     float(order1['fills'][0]['qty']) - float(order1['fills'][0]['commission']),
                     symbolInfo['filters'][2]['stepSize']
                 ))
@@ -51,11 +51,14 @@ class CryptoBot:
                     except Exception:
                         pass
 
-                order2 = client.order_limit_sell(
-                    symbol=symbol,
-                    quantity=sellQuantity,
-                    price=('{:.' + str(len(symbolInfo['filters'][0]['tickSize'].split('.')[-1])) + 'f}').format(thePrice)
-                )
+                try:
+                    order2 = client.order_limit_sell(
+                        symbol=symbol,
+                        quantity=sellQuantity,
+                        price=('{:.' + str(len(symbolInfo['filters'][0]['tickSize'].split('.')[-1])) + 'f}').format(thePrice)
+                    )
+                except Exception as e3:
+                    telegram_send.send(messages='Failed to sell ' + symbol + '\n' + str(e3), silent=False)
 
                 if type(order2) is dict:
                     isLimitSellCreated = True
@@ -68,7 +71,7 @@ class CryptoBot:
                     shm1Lock.buf[0] = 1
                     allPrices = json.loads(shm.buf.tobytes().decode('utf-8').rstrip('\x00'))
                     shm1Lock.buf[0] = 0
-                    if allPrices[symbol]['price'] <= buyPrice - buyPrice * 0.026 and isLimitSellCreated:
+                    if allPrices[symbol]['price'] <= buyPrice - buyPrice * 0.015 and isLimitSellCreated:
                         try:
                             client.cancel_order(symbol=symbol, orderId=order2['orderId'])
 
